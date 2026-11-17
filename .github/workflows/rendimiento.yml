@@ -1,6 +1,8 @@
 name: Rendimiento
 
 on:
+  push:
+    branches: [test/hus4-03-concurrencia]
   pull_request:                 # humo en cada PR
   schedule:
     - cron: '0 6 * * *'         # carga nocturna (01:00 hora de Lima)
@@ -31,7 +33,7 @@ jobs:
       # Cuenta efímera creada en la base de datos aislada de este job.
       EMAIL: ci-admin@ferreteria.test
       MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: 'true'
-      ESCENARIO: ${{ github.event.inputs.escenario || (github.event_name == 'schedule' && 'carga' || 'humo') }}
+      ESCENARIO: ${{ github.event.inputs.escenario || (github.event_name == 'schedule' && 'carga' || (github.ref_name == 'test/hus4-03-concurrencia' && 'concurrencia' || 'humo')) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
