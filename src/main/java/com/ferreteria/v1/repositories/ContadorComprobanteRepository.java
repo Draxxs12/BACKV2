@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 public interface ContadorComprobanteRepository extends JpaRepository<ContadorComprobante, String> {
@@ -14,6 +15,7 @@ public interface ContadorComprobanteRepository extends JpaRepository<ContadorCom
      * Sincroniza una serie con su histórico. Se ejecuta únicamente durante
      * el arranque, antes de aceptar solicitudes de venta.
      */
+    @Transactional
     @Modifying
     @Query(value = "INSERT INTO contador_comprobante (serie, ultimo_numero) "
             + "SELECT :serie, COALESCE(MAX(CAST(SUBSTRING(numero_comprobante, 6) "
