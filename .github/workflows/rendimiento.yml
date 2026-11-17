@@ -28,8 +28,6 @@ jobs:
       DB_URL: jdbc:mysql://127.0.0.1:3306/tienda_db?useSSL=false&allowPublicKeyRetrieval=true
       DB_USER: root
       DB_PASS: pruebas
-      # Clave exclusiva para CI; nunca reutilizar la clave de producción.
-      JWT_SECRET: ${{ secrets.JWT_SECRET_PRUEBAS }}
       # Cuenta efímera creada en la base de datos aislada de este job.
       EMAIL: ci-admin@ferreteria.test
       MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: 'true'
@@ -37,7 +35,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: '17', cache: maven }
+        with: { distribution: temurin, java-version: '25', cache: maven }
+      - name: Generar clave JWT efímera para CI
+        run: |
+          python3 -c "import base64,secrets; print('JWT_SECRET=' + base64.b64encode(secrets.token_bytes(32)).decode())" >> "$GITHUB_ENV"
       - name: Token de administrador para las pruebas (sin código MFA)
         run: |
           TOKEN=$(python3 k6/generar_token.py)

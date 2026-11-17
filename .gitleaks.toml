@@ -1,0 +1,6 @@
+[allowlist]
+description = "Valor público de prueba JWT retirado del workflow; no corresponde a una credencial real."
+regexTarget = "secret"
+regexes = [
+  '''RmVycmV0ZXJpYUNoYXJpdG8tQ0kta2V5LTIwMjYtMDE='''
+]

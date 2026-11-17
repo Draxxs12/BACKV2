@@ -1,5 +1,9 @@
 name: Calidad backend
 
+permissions:
+  contents: read
+  pull-requests: read
+
 on:
   pull_request:
   push:
@@ -8,7 +12,6 @@ on:
 jobs:
   pruebas:
     runs-on: ubuntu-latest
-    # V1ApplicationTests y SecurityConfigAuthorizationTest levantan el contexto de Spring (necesita MySQL).
     services:
       mysql:
         image: mysql:8.0
@@ -23,8 +26,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: '17', cache: maven }
-      - name: Permiso de ejecución del wrapper (mvnw está versionado sin ese permiso)
+        with: { distribution: temurin, java-version: '25', cache: maven }
+      - name: Permiso de ejecución del wrapper
         run: chmod +x mvnw
       - name: Pruebas y cobertura (JaCoCo)
         run: ./mvnw -B verify
@@ -35,7 +38,6 @@ jobs:
         with:
           name: cobertura-jacoco
           path: target/site/jacoco/**
-
   secretos:
     runs-on: ubuntu-latest
     steps:
