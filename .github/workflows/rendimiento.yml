@@ -33,7 +33,7 @@ jobs:
       # Cuenta efímera creada en la base de datos aislada de este job.
       EMAIL: ci-admin@ferreteria.test
       MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: 'true'
-      ESCENARIO: ${{ github.event.inputs.escenario || (github.event_name == 'schedule' && 'carga' || (((github.event_name == 'pull_request' && github.head_ref == 'test/hus4-03-concurrencia') || github.ref_name == 'test/hus4-03-concurrencia') && 'concurrencia' || 'humo')) }}
+      ESCENARIO: ${{ github.event.inputs.escenario || (github.event_name == 'schedule' && 'carga' || (((github.event_name == 'pull_request' && (github.head_ref == 'test/hus4-03-concurrencia' || github.head_ref == 'fix/validar-concurrencia-en-pr')) || github.ref_name == 'test/hus4-03-concurrencia') && 'concurrencia' || 'humo')) }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
