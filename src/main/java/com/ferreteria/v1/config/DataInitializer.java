@@ -28,6 +28,7 @@ public class DataInitializer implements CommandLineRunner {
     @Autowired private ClienteRepository          clienteRepo;
     @Autowired private ProveedorRepository        proveedorRepo;
     @Autowired private VentaRepository            ventaRepo;
+    @Autowired private ContadorComprobanteRepository contadorComprobanteRepo;
     @Autowired private DetalleVentaRepository      detalleVentaRepo;
     @Autowired private InventarioRepository        inventarioRepo;
     @Autowired private CompraRepository            compraRepo;
@@ -68,6 +69,10 @@ public class DataInitializer implements CommandLineRunner {
         List<Usuario>  users    = usuarioRepo.findAll();
 
         completarVentas(prods, clientes, users);
+        // Sincroniza los correlativos históricos una sola vez al iniciar,
+        // antes de que la aplicación reciba solicitudes de venta.
+        contadorComprobanteRepo.sincronizarSerieDesdeVentas("B001");
+        contadorComprobanteRepo.sincronizarSerieDesdeVentas("F001");
         completarCompras(prods, users);
         completarDevoluciones(users, prods);
         completarCaja(users);
