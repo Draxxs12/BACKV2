@@ -29,7 +29,7 @@ jobs:
       DB_USER: root
       DB_PASS: pruebas
       # Clave exclusiva para CI; nunca reutilizar la clave de producción.
-      JWT_SECRET: ${{ secrets.JWT_SECRET_PRUEBAS }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET_PRUEBAS || 'RmVycmV0ZXJpYUNoYXJpdG8tQ0kta2V5LTIwMjYtMDE=' }}
       # Cuenta efímera creada en la base de datos aislada de este job.
       EMAIL: ci-admin@ferreteria.test
       MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: 'true'
