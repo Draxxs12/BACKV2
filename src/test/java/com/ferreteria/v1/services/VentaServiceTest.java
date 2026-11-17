@@ -50,7 +50,7 @@ class VentaServiceTest {
     void preparar() {
         when(ventaRepository.save(any(Venta.class))).thenAnswer(i -> i.getArgument(0));
         when(detalleVentaRepository.save(any(DetalleVenta.class))).thenAnswer(i -> i.getArgument(0));
-        when(ventaRepository.count()).thenReturn(0L);
+        when(contadorComprobanteRepository.reservarSiguiente(anyString())).thenReturn(1);
         when(contadorComprobanteRepository.obtenerNumeroReservado()).thenReturn(1L);
     }
 
@@ -186,7 +186,7 @@ class VentaServiceTest {
 
     @Test
     void registrarVenta_facturaUsaSerieF001ConElSiguienteNumero() {
-        when(ventaRepository.count()).thenReturn(4L);
+        when(contadorComprobanteRepository.obtenerNumeroReservado()).thenReturn(5L);
         Producto p = producto(5, 10);
         Venta v = service.registrarVenta(venta(Venta.TipoComprobante.Factura),
                 new ArrayList<>(List.of(linea(p, 1, 10.0))), new Usuario());
