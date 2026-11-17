@@ -11,28 +11,29 @@ import org.springframework.stereotype.Repository;
 public interface ContadorComprobanteRepository extends JpaRepository<ContadorComprobante, String> {
 
     /**
-     * Inicializa la serie una sola vez tomando el último correlativo existente.
-     * La inicialización se separa del incremento para no mezclar el escaneo de
-     * ventas con la actualización concurrente de la fila del contador.
+     * Sincroniza una serie con su histórico. Se ejecuta únicamente durante
+     * el arranque, antes de aceptar solicitudes de venta.
      */
     @Modifying
-    @Query(value = "INSERT IGNORE INTO contador_comprobante (serie, ultimo_numero) "
+    @Query(value = "INSERT INTO contador_comprobante (serie, ultimo_numero) "
             + "SELECT :serie, COALESCE(MAX(CAST(SUBSTRING(numero_comprobante, 6) "
             + "AS UNSIGNED)), 0) FROM ventas "
-            + "WHERE numero_comprobante LIKE CONCAT(:serie, '-%')",
+            + "WHERE numero_comprobante LIKE CONCAT(:serie, '-%') "
+            + "ON DUPLICATE KEY UPDATE ultimo_numero = "
+            + "GREATEST(ultimo_numero, VALUES(ultimo_numero))",
             nativeQuery = true)
-    void inicializarSiNoExiste(@Param("serie") String serie);
+    void sincronizarSerieDesdeVentas(@Param("serie") String serie);
 
     /**
-     * Reserva el siguiente número actualizando únicamente la fila de la serie.
-     * LAST_INSERT_ID permite recuperar el valor reservado en esta conexión.
+     * Reserva atómicamente el siguiente correlativo de la serie.
+     * La fila ya debe existir por la sincronización de inicio.
      */
     @Modifying
     @Query(value = "UPDATE contador_comprobante "
             + "SET ultimo_numero = LAST_INSERT_ID(ultimo_numero + 1) "
             + "WHERE serie = :serie",
             nativeQuery = true)
-    void reservarSiguiente(@Param("serie") String serie);
+    int reservarSiguiente(@Param("serie") String serie);
 
     @Query(value = "SELECT LAST_INSERT_ID()", nativeQuery = true)
     Long obtenerNumeroReservado();
