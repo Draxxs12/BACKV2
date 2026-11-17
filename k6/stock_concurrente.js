@@ -15,7 +15,7 @@ export const options = {
   thresholds: {
     ventas_confirmadas: ['count==50'],
     ventas_rechazadas_4xx: ['count==50'],
-    errores5xx: ['count==0'],
+    errores_5xx: ['count==0'],
   },
 };
 
