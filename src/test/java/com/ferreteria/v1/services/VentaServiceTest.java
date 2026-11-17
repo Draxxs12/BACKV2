@@ -50,6 +50,7 @@ class VentaServiceTest {
     void preparar() {
         when(ventaRepository.save(any(Venta.class))).thenAnswer(i -> i.getArgument(0));
         when(detalleVentaRepository.save(any(DetalleVenta.class))).thenAnswer(i -> i.getArgument(0));
+        when(contadorComprobanteRepository.reservarSiguiente(anyString())).thenReturn(1);
         when(contadorComprobanteRepository.obtenerNumeroReservado()).thenReturn(1L);
     }
 
