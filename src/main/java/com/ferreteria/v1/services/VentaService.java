@@ -99,11 +99,14 @@ public class VentaService {
 
         venta.setUsuario(usuarioActual);
 
-        // Autogenera el número: serie F001 para Factura, B001 para Boleta.
+        // El contador se sincroniza al iniciar la aplicación; aquí solo se reserva
+        // el siguiente correlativo mediante una actualización atómica.
         if (venta.getNumeroComprobante() == null || venta.getNumeroComprobante().isBlank()) {
             String serie = venta.getTipoComprobante() == Venta.TipoComprobante.Factura ? "F001" : "B001";
-            contadorComprobanteRepository.inicializarSiNoExiste(serie);
-            contadorComprobanteRepository.reservarSiguiente(serie);
+            int filasActualizadas = contadorComprobanteRepository.reservarSiguiente(serie);
+            if (filasActualizadas != 1) {
+                throw new IllegalStateException("No existe el contador para la serie " + serie + ".");
+            }
             Long numero = contadorComprobanteRepository.obtenerNumeroReservado();
             if (numero == null || numero <= 0) {
                 throw new IllegalStateException("No se pudo reservar el numero del comprobante.");
