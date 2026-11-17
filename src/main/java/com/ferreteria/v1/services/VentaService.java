@@ -102,15 +102,13 @@ public class VentaService {
         // Autogenera el número: serie F001 para Factura, B001 para Boleta.
         if (venta.getNumeroComprobante() == null || venta.getNumeroComprobante().isBlank()) {
             String serie = venta.getTipoComprobante() == Venta.TipoComprobante.Factura ? "F001" : "B001";
+            contadorComprobanteRepository.inicializarSiNoExiste(serie);
             contadorComprobanteRepository.reservarSiguiente(serie);
             Long numero = contadorComprobanteRepository.obtenerNumeroReservado();
             if (numero == null || numero <= 0) {
                 throw new IllegalStateException("No se pudo reservar el numero del comprobante.");
             }
 
-            // Evita reutilizar números cuando el contador todavía no refleja ventas existentes.
-            long siguientePorVentas = ventaRepository.count() + 1;
-            numero = Math.max(numero, siguientePorVentas);
             venta.setNumeroComprobante(serie + String.format("-%05d", numero));
         }
 
