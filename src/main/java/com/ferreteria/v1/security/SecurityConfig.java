@@ -76,7 +76,7 @@ public class SecurityConfig {
                     "/api/clientes/**"
                 ).hasAnyRole("ADMINISTRADOR", "RECEPCIONISTA")
                 // El recepcionista puede consultar el catálogo para realizar ventas.
-                .requestMatchers(HttpMethod.GET, "/api/productos/**")
+                .requestMatchers(HttpMethod.GET, "/api/productos", "/api/productos/**")
                     .hasAnyRole("ADMINISTRADOR", "ALMACENERO", "RECEPCIONISTA")
                 // Las operaciones de escritura de inventario siguen restringidas.
                 .requestMatchers(
