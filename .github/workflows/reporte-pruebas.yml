@@ -1,0 +1,133 @@
+name: Reporte consolidado de pruebas
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  pruebas:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: pruebas
+          MYSQL_DATABASE: tienda_db
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+    env:
+      DB_URL: jdbc:mysql://127.0.0.1:3306/tienda_db?useSSL=false&allowPublicKeyRetrieval=true
+      DB_USER: root
+      DB_PASS: pruebas
+    steps:
+      - name: Descargar backend
+        uses: actions/checkout@v7
+        with:
+          repository: Draxxs12/BACKV2
+          ref: main
+          path: backend
+      - name: Descargar frontend
+        uses: actions/checkout@v7
+        with:
+          repository: Draxxs12/FRONTV2
+          ref: main
+          path: frontend
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+          cache-dependency-path: backend/pom.xml
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22.23.4
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Preparar resultados
+        run: mkdir -p resultados
+      - name: Pruebas backend y cobertura
+        id: backend
+        continue-on-error: true
+        working-directory: backend
+        run: |
+          chmod +x mvnw
+          ./mvnw -B verify
+      - name: Análisis estático backend
+        id: backend_static
+        continue-on-error: true
+        working-directory: backend
+        run: ./mvnw -B spotbugs:check
+      - name: Instalar frontend
+        id: frontend_install
+        continue-on-error: true
+        working-directory: frontend
+        run: |
+          npm install --global npm@11.12.1
+          npm ci
+      - name: Pruebas unitarias frontend
+        id: frontend_unit
+        if: always() && steps.frontend_install.outcome == 'success'
+        continue-on-error: true
+        working-directory: frontend
+        run: npx ng test --watch=false
+      - name: Compilación frontend
+        id: frontend_build
+        if: always() && steps.frontend_install.outcome == 'success'
+        continue-on-error: true
+        working-directory: frontend
+        run: npm run build
+      - name: Pruebas end-to-end frontend
+        id: frontend_e2e
+        if: always() && steps.frontend_install.outcome == 'success'
+        continue-on-error: true
+        working-directory: frontend
+        run: |
+          npx playwright install --with-deps chromium
+          npm run e2e
+      - name: Generar PDF consolidado
+        if: always()
+        env:
+          BACKEND: ${{ steps.backend.outcome }}
+          BACKEND_STATIC: ${{ steps.backend_static.outcome }}
+          FRONTEND_INSTALL: ${{ steps.frontend_install.outcome }}
+          FRONTEND_UNIT: ${{ steps.frontend_unit.outcome }}
+          FRONTEND_BUILD: ${{ steps.frontend_build.outcome }}
+          FRONTEND_E2E: ${{ steps.frontend_e2e.outcome }}
+          REPO_BACKEND: Draxxs12/BACKV2
+          REPO_FRONTEND: Draxxs12/FRONTV2
+          COMMIT_BACKEND: ${{ github.sha }}
+        run: |
+          python -m pip install reportlab
+          python - <<'PY'
+          import os, json
+          data = {
+            "fecha_utc": os.environ.get("GITHUB_RUN_STARTED_AT", ""),
+            "ejecucion": os.environ.get("GITHUB_RUN_NUMBER", ""),
+            "url": os.environ.get("GITHUB_SERVER_URL", "") + "/" + os.environ.get("GITHUB_REPOSITORY", "") + "/actions/runs/" + os.environ.get("GITHUB_RUN_ID", ""),
+            "backend": os.environ["REPO_BACKEND"],
+            "frontend": os.environ["REPO_FRONTEND"],
+            "resultados": [
+              {"area":"Backend","prueba":"Maven verify + JaCoCo","estado":os.environ.get("BACKEND","skipped")},
+              {"area":"Backend","prueba":"SpotBugs / FindSecBugs","estado":os.environ.get("BACKEND_STATIC","skipped")},
+              {"area":"Frontend","prueba":"Instalación npm ci","estado":os.environ.get("FRONTEND_INSTALL","skipped")},
+              {"area":"Frontend","prueba":"Pruebas unitarias Angular","estado":os.environ.get("FRONTEND_UNIT","skipped")},
+              {"area":"Frontend","prueba":"Build de producción","estado":os.environ.get("FRONTEND_BUILD","skipped")},
+              {"area":"Frontend","prueba":"Pruebas E2E Playwright","estado":os.environ.get("FRONTEND_E2E","skipped")}
+            ]
+          }
+          with open("resultados/resumen.json","w") as f: json.dump(data,f,ensure_ascii=False,indent=2)
+          PY
+          python backend/.github/scripts/generar_reporte_pruebas.py
+      - name: Publicar documento y datos
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: reporte-consolidado-pruebas
+          path: resultados/
+          if-no-files-found: warn
+          retention-days: 30
