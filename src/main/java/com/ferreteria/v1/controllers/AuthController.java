@@ -5,6 +5,8 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +16,11 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.ferreteria.v1.models.AuthChallenge;
 import com.ferreteria.v1.models.Usuario;
@@ -28,7 +34,7 @@ import com.ferreteria.v1.services.EmailService;
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-
+    private static final Logger logger = LoggerFactory.getLogger(AuthController.class);
     private static final int CODE_EXPIRATION_MINUTES = 10;
     private static final int MAX_ATTEMPTS = 5;
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -84,10 +90,12 @@ public class AuthController {
         AuthChallenge challenge = crearChallenge(usuario, AuthChallenge.Type.PASSWORD_RESET);
         try {
             emailService.enviarCodigo(usuario.getEmail(), usuario.getNombre(), challengeCode(challenge), true);
-        } catch (Exception e) {
+        }catch (Exception e) {
+            logger.error("Error al enviar el código de recuperación de contraseña", e);
             challengeRepository.delete(challenge);
+
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body("No se pudo enviar el código de verificación.");
+                    .body("No se pudo enviar el código de recuperación. Revisa la configuración del correo del servidor.");
         }
 
         return ResponseEntity.ok(Map.of(
@@ -151,10 +159,12 @@ public class AuthController {
         try {
             emailService.enviarCodigo(usuario.getEmail(), usuario.getNombre(), challengeCode(challenge),
                     false);
-        } catch (Exception e) {
+        }catch (Exception e) {
+            logger.error("Error al enviar el código MFA mediante Gmail API", e);
             challengeRepository.delete(challenge);
+
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body("No se pudo enviar el código de verificación. Configura el correo del servidor.");
+                    .body("No se pudo enviar el código de verificación. Revisa la configuración del correo del servidor.");
         }
 
         return ResponseEntity.ok(Map.of(
