@@ -1,7 +1,9 @@
 package com.ferreteria.v1.security;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -38,8 +40,33 @@ class SecurityConfigAuthorizationTest {
 
     @Test
     @WithMockUser(roles = "RECEPCIONISTA")
-    void recepcionistaNoPuedeAdministrarInventario() throws Exception {
+    void recepcionistaPuedeConsultarCatalogoDeProductos() throws Exception {
         mockMvc.perform(get("/api/productos"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(roles = "RECEPCIONISTA")
+    void recepcionistaNoPuedeCrearProductos() throws Exception {
+        mockMvc.perform(post("/api/productos")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "RECEPCIONISTA")
+    void recepcionistaNoPuedeActualizarProductos() throws Exception {
+        mockMvc.perform(put("/api/productos/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "RECEPCIONISTA")
+    void recepcionistaNoPuedeEliminarProductos() throws Exception {
+        mockMvc.perform(delete("/api/productos/1"))
                 .andExpect(status().isForbidden());
     }
 
