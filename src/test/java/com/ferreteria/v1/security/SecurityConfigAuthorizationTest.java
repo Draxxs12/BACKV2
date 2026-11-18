@@ -38,14 +38,12 @@ class SecurityConfigAuthorizationTest {
     }
 
     @Test
-    @WithMockUser(roles = "RECEPCIONISTA")
     void recepcionistaPuedeConsultarCatalogoDeProductos() throws Exception {
         mockMvc.perform(get("/api/productos").with(user("recepcionista").roles("RECEPCIONISTA")))
                 .andExpect(status().isOk());
     }
 
     @Test
-    @WithMockUser(roles = "RECEPCIONISTA")
     void recepcionistaNoPuedeCrearProductos() throws Exception {
         mockMvc.perform(post("/api/productos")
                         .with(user("recepcionista").roles("RECEPCIONISTA"))
@@ -55,7 +53,6 @@ class SecurityConfigAuthorizationTest {
     }
 
     @Test
-    @WithMockUser(roles = "RECEPCIONISTA")
     void recepcionistaNoPuedeActualizarProductos() throws Exception {
         mockMvc.perform(put("/api/productos/1")
                         .with(user("recepcionista").roles("RECEPCIONISTA"))
@@ -65,7 +62,6 @@ class SecurityConfigAuthorizationTest {
     }
 
     @Test
-    @WithMockUser(roles = "RECEPCIONISTA")
     void recepcionistaNoPuedeEliminarProductos() throws Exception {
         mockMvc.perform(delete("/api/productos/1")
                         .with(user("recepcionista").roles("RECEPCIONISTA")))
@@ -79,7 +75,6 @@ class SecurityConfigAuthorizationTest {
     }
 
     @Test
-    @WithMockUser(roles = "ALMACENERO")
     void almaceneroNoPuedeConsultarVentas() throws Exception {
         mockMvc.perform(get("/api/ventas").with(user("almacenero").roles("ALMACENERO")))
                 .andExpect(status().isForbidden());
